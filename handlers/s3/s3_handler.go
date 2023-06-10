@@ -1,4 +1,4 @@
-package handlers
+package s3
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"s3test/constants"
+	mongodb "s3test/handlers/mongo"
 	"s3test/models"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -55,7 +56,8 @@ func UploadFile(c echo.Context) error {
 		FilePath:   constants.FilePath,
 		UploadTime: time.Now(),
 	}
-	err = db.InsertFileMetadata(&fileMeta)
+	// TODO:
+	err = mongodb.InsertFileMetadata(&fileMeta)
 	if err != nil {
 		log.Println("Failed to insert file metadata to MongoDB", err)
 		return err
@@ -102,7 +104,8 @@ func DownloadFile(c echo.Context) error {
 	}
 
 	// 파일 다운로드 후 메타데이터 조회
-	fileMeta, err := db.GetFileMetatData(constants.FileName)
+	// TODO:
+	fileMeta, err := mongodb.GetFileMetatData(constants.FileName)
 	if err != nil {
 		log.Println("Failed to get file metadata from MongoDB", err)
 		return err
@@ -134,7 +137,8 @@ func DeleteFile(c echo.Context) error {
 	}
 
 	// 파일 삭제 후 메타데이터 삭제
-	err = db.DeleteFileMeta(constants.FileName)
+	// TODO:
+	err = mongodb.DeleteFileMeta(constants.FileName)
 	if err != nil {
 		log.Println("Failed to delete file metadata", err)
 		return err
@@ -170,7 +174,8 @@ func ChangeStorageClass(c echo.Context) error {
 		return err
 	}
 
-	err = db.UpdateFileMetadata(models.FileMetadata{
+	// TODO:
+	err = mongodb.UpdateFileMetadata(models.FileMetadata{
 		FileName:     constants.FileName,
 		StorageClass: "INTELLIGENT_TIERING",
 	})

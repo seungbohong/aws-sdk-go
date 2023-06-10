@@ -2,20 +2,21 @@ package routes
 
 import (
 	"net/http"
-	"s3test/handlers"
+	mongodb "s3test/handlers/mongo"
+	"s3test/handlers/s3"
 	"s3test/models"
 
 	"github.com/labstack/echo/v4"
 )
 
-func InitRoutes(e *echo.Echo, db *handlers.MongoDB) {
+func InitRoutes(e *echo.Echo, db *mongodb.MongoDB) {
 
 	// 라우트 설정
-	e.POST("/upload", handlers.UploadFile)
-	e.GET("/download", handlers.DownloadFile)
-	e.DELETE("/delete", handlers.DeleteFile)
-	e.PUT("/change-storage-class", handlers.ChangeStorageClass)
-	e.GET("/presigned-url", handlers.GetPresignedUrl)
+	e.POST("/upload", s3.UploadFile)
+	e.GET("/download", s3.DownloadFile)
+	e.DELETE("/delete", s3.DeleteFile)
+	e.PUT("/change-storage-class", s3.ChangeStorageClass)
+	e.GET("/presigned-url", s3.GetPresignedUrl)
 
 	// MongoDB 관련 endpoints
 	// 파일 메타데이터 조회
