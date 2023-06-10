@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"s3test/constants"
+	"s3test/models"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -41,15 +42,27 @@ func UploadFile(c echo.Context) error {
 	_, err = svc.PutObject(&s3.PutObjectInput{
 		Body:   file,
 		Bucket: aws.String(constants.Bucket),
-		Key:    aws.String(constants.Key),
+		Key:    aws.String(constants.FileName),
 	})
 	if err != nil {
 		log.Println("Failed to upload a file", err)
 		return err
 	}
 
+	// 파일 메타데이터 저장
+	fileMeta := models.FileMetadata{
+		FileName:   constants.FileName,
+		FilePath:   constants.FilePath,
+		UploadTime: time.Now(),
+	}
+	err = db.InsertFileMetadata(&fileMeta)
+	if err != nil {
+		log.Println("Failed to insert file metadata to MongoDB", err)
+		return err
+	}
+
 	// 업로드 완료
-	fmt.Println("파일 업로드 완료")
+	log.Println("파일 업로드 완료")
 	return c.String(http.StatusOK, "File uploaded successfully")
 }
 
@@ -81,14 +94,21 @@ func DownloadFile(c echo.Context) error {
 
 	numBytes, err := downloader.Download(file, &s3.GetObjectInput{
 		Bucket: aws.String(constants.Bucket),
-		Key:    aws.String(constants.Key),
+		Key:    aws.String(constants.FileName),
 	})
 	if err != nil {
 		log.Println("Failed to download a file", err)
 		return err
 	}
 
-	fmt.Println("파일 다운로드 완료:", numBytes, "바이트")
+	// 파일 다운로드 후 메타데이터 조회
+	fileMeta, err := db.GetFileMetatData(constants.FileName)
+	if err != nil {
+		log.Println("Failed to get file metadata from MongoDB", err)
+		return err
+	}
+
+	log.Println("파일 다운로드 완료:", fileMeta)
 	return c.String(http.StatusOK, fmt.Sprintf("File downloaded successfully: %d bytes", numBytes))
 }
 
@@ -100,20 +120,27 @@ func DeleteFile(c echo.Context) error {
 	// S3 서비스 클라이언트 생성
 	svc := s3.New(sess)
 
-	// 객체 삭제 요청 생성
+	// 파일 삭제 요청 생성
 	deleteInput := &s3.DeleteObjectInput{
 		Bucket: aws.String(constants.Bucket),
-		Key:    aws.String(constants.Key),
+		Key:    aws.String(constants.FileName),
 	}
 
-	// 객체 삭제
+	// 파일 삭제
 	_, err := svc.DeleteObject(deleteInput)
 	if err != nil {
 		log.Println("Failed to delete an object", err)
 		return err
 	}
 
-	fmt.Println("객체 삭제 완료")
+	// 파일 삭제 후 메타데이터 삭제
+	err = db.DeleteFileMeta(constants.FileName)
+	if err != nil {
+		log.Println("Failed to delete file metadata", err)
+		return err
+	}
+
+	log.Println("객체 삭제 완료")
 	return c.String(http.StatusOK, "File deleted successfully")
 }
 
@@ -133,8 +160,8 @@ func ChangeStorageClass(c echo.Context) error {
 	// 객체의 스토리지 클래스 변경
 	_, err = svc.CopyObject(&s3.CopyObjectInput{
 		Bucket:            aws.String(constants.Bucket),
-		CopySource:        aws.String(constants.Bucket + "/" + constants.Key),
-		Key:               aws.String(constants.Key),
+		CopySource:        aws.String(constants.Bucket + "/" + constants.FileName),
+		Key:               aws.String(constants.FileName),
 		StorageClass:      aws.String("INTELLIGENT_TIERING"),
 		MetadataDirective: aws.String("COPY"),
 	})
@@ -143,8 +170,17 @@ func ChangeStorageClass(c echo.Context) error {
 		return err
 	}
 
+	err = db.UpdateFileMetadata(models.FileMetadata{
+		FileName:     constants.FileName,
+		StorageClass: "INTELLIGENT_TIERING",
+	})
+	if err != nil {
+		log.Println("Failed to update file metadata in MongoDB", err)
+		return err
+	}
+
 	// 스토리지 클래스 변경 완료
-	fmt.Println("객체의 스토리지 클래스 변경 완료")
+	log.Println("객체의 스토리지 클래스 변경 완료")
 	return c.String(http.StatusOK, "Object's storage class changed successfully")
 }
 
@@ -164,7 +200,7 @@ func GetPresignedUrl(c echo.Context) error {
 	// PresignedURL 생성 요청 설정
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(constants.Bucket),
-		Key:    aws.String(constants.Key),
+		Key:    aws.String(constants.FileName),
 	})
 
 	// Presinged URL 만료 시간 설정 (예: 1시간)
