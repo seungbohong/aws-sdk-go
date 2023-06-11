@@ -25,42 +25,4 @@ func InitRoutes(e *echo.Echo, db *mongodb.MongoDB, s3client *s3.S3Client, sess *
 	e.GET("/presigned-url", func(c echo.Context) error {
 		return s3client.GetPresignedUrl(c)
 	})
-
-	/*
-		// MongoDB 관련 endpoints
-		// 파일 메타데이터 조회
-		e.GET("/file/:id", func(c echo.Context) error {
-			fileName := c.Param("id")
-			file, err := db.GetFileMetatData(fileName)
-			if err != nil {
-				return err
-			}
-			return c.JSON(http.StatusOK, file)
-		})
-
-		// 파일 메타데이터 삭제
-		e.DELETE("/file/:id", func(c echo.Context) error {
-			fileName := c.Param("id")
-			err := db.DeleteFileMeta(fileName)
-			if err != nil {
-				return err
-			}
-			return c.JSON(http.StatusOK, fileName)
-		})
-
-		// 파일 메타데이터 업데이트
-		e.PUT("/file/:id", func(c echo.Context) error {
-			fileName := c.Param("id")
-			var updatedFile models.FileMetadata
-			if err := c.Bind(&updatedFile); err != nil {
-				return err
-			}
-			updatedFile.FileName = fileName
-			err := db.UpdateFileMetadata(updatedFile)
-			if err != nil {
-				return err
-			}
-			return c.String(http.StatusOK, "File metadata updated successfully")
-		})
-	*/
 }
