@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"s3test/constants"
 	mongodb "s3test/handlers/mongo"
+	s "s3test/handlers/s3"
 	"s3test/routes"
 	"time"
 
@@ -32,11 +33,14 @@ func main() {
 	}
 	defer mongoClient.Disconnect(context.Background())
 
-	// MongoDB 핸들러 생성
+	// MongoDB 인스턴스 생성
 	db := mongodb.NewMongoDB(mongoClient, constants.DBName, constants.CollectionName)
 
+	// S3 클라이언트 생성
+	s3client, sess, _ := s.NewS3Client()
+
 	// 라우트 초기화
-	routes.InitRoutes(e, db)
+	routes.InitRoutes(e, db, s3client, sess)
 
 	// 서버 시작
 	go func() {
