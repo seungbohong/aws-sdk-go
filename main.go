@@ -7,12 +7,15 @@ import (
 	"os"
 	"os/signal"
 	"s3test/constants"
-	"s3test/handlers"
+	mongodb "s3test/handlers/mongo"
+	s "s3test/handlers/s3"
 	"s3test/routes"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -24,17 +27,20 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// MongoDB 연결
-	mongoClient, err := handlers.ConnectToMongoDB()
+	mongoClient, err := ConnectToMongoDB()
 	if err != nil {
 		log.Fatal("Failed to connect to MongoDB:", err)
 	}
 	defer mongoClient.Disconnect(context.Background())
 
-	// MongoDB 핸들러 생성
-	db := handlers.NewMongoDB(mongoClient, constants.DBName, constants.CollectionName)
+	// MongoDB 인스턴스 생성
+	db := mongodb.NewMongoDB(mongoClient, constants.DBName, constants.CollectionName)
+
+	// S3 클라이언트 생성
+	s3client, sess, _ := s.NewS3Client()
 
 	// 라우트 초기화
-	routes.InitRoutes(e, db)
+	routes.InitRoutes(e, db, s3client, sess)
 
 	// 서버 시작
 	go func() {
@@ -56,4 +62,24 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		log.Fatal("Server shutdown error: ", err)
 	}
+}
+
+func ConnectToMongoDB() (*mongo.Client, error) {
+	// MongoDB 연결 설정
+	clientOptions := options.Client().ApplyURI(constants.MongoDBURL)
+	client, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		log.Println("Failed to connect to MongoDB", err)
+		return nil, err
+	}
+
+	// 연결 확인
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Println("Failed to ping MongoDB", err)
+		return nil, err
+	}
+
+	log.Println("Connected to MongoDB")
+	return client, nil
 }

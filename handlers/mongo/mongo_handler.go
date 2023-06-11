@@ -1,4 +1,4 @@
-package handlers
+package mongodb
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoDB struct {
@@ -23,26 +22,6 @@ func NewMongoDB(client *mongo.Client, databaseName, collectionName string) *Mong
 		databaseName:   databaseName,
 		collectionName: collectionName,
 	}
-}
-
-func ConnectToMongoDB() (*mongo.Client, error) {
-	// MongoDB 연결 설정
-	clientOptions := options.Client().ApplyURI(constants.MongoDBURL)
-	client, err := mongo.Connect(context.Background(), clientOptions)
-	if err != nil {
-		log.Println("Failed to connect to MongoDB", err)
-		return nil, err
-	}
-
-	// 연결 확인
-	err = client.Ping(context.Background(), nil)
-	if err != nil {
-		log.Println("Failed to ping MongoDB", err)
-		return nil, err
-	}
-
-	log.Println("Connected to MongoDB")
-	return client, nil
 }
 
 // 파일 메타데이터 삽입
