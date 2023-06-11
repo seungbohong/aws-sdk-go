@@ -46,7 +46,7 @@ func (db *MongoDB) GetFileMetatData(fileName string) (*models.FileMetadata, erro
 	collection := db.client.Database(constants.DBName).Collection(constants.CollectionName)
 
 	// 조회할 파일의 조건 설정
-	filter := bson.M{"file_name": fileName}
+	filter := bson.M{"filename": fileName}
 
 	// 파일의 메타데이터 조회
 	var fileMetadata models.FileMetadata
@@ -66,7 +66,7 @@ func (db *MongoDB) DeleteFileMeta(fileName string) error {
 	collection := db.client.Database(constants.DBName).Collection(constants.CollectionName)
 
 	// 삭제할 파일의 조건 설정
-	filter := bson.M{"file_name": fileName}
+	filter := bson.M{"filename": fileName}
 
 	// 파일 메타데이터 삭제
 	_, err := collection.DeleteOne(context.Background(), filter)
@@ -84,11 +84,11 @@ func (db *MongoDB) UpdateFileMetadata(file models.FileMetadata) error {
 	collection := db.client.Database(constants.DBName).Collection(constants.CollectionName)
 
 	// 업데이트할 파일의 조건 설정
-	filter := bson.M{"file_name": file.FileName}
+	filter := bson.M{"filename": file.FileName}
 
 	// 파일 메타데이터 업데이트 빌드 설정
 	update := bson.D{
-		{"$set", bson.D{{"storage_class", "INTELLIGENT_TIERING"}}},
+		{"$set", bson.D{{"storageclass", "INTELLIGENT_TIERING"}}},
 	}
 
 	// 파일 메타데이터 업데이트

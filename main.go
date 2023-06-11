@@ -66,7 +66,13 @@ func main() {
 
 func ConnectToMongoDB() (*mongo.Client, error) {
 	// MongoDB 연결 설정
-	clientOptions := options.Client().ApplyURI(constants.MongoDBURL)
+	clientOptions := options.Client().
+		ApplyURI(constants.MongoDBURL).
+		SetAuth(options.Credential{
+			// Get MongoDB credentials from Environment Variable
+			Username: os.Getenv("MONGO_USERNAME"),
+			Password: os.Getenv("MONGO_PASSWORD"),
+		})
 	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
 		log.Println("Failed to connect to MongoDB", err)

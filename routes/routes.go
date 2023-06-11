@@ -16,10 +16,10 @@ func InitRoutes(e *echo.Echo, db *mongodb.MongoDB, s3client *s3.S3Client, sess *
 	e.GET("/download", func(c echo.Context) error {
 		return s3client.DownloadFile(c, db, sess)
 	})
-	e.DELETE("/delete", func(c echo.Context) error {
+	e.GET("/delete", func(c echo.Context) error {
 		return s3client.DeleteFile(c, db)
 	})
-	e.PUT("/change-storage-class", func(c echo.Context) error {
+	e.GET("/change-storage-class", func(c echo.Context) error {
 		return s3client.ChangeStorageClass(c, db)
 	})
 	e.GET("/presigned-url", func(c echo.Context) error {
