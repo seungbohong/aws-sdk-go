@@ -7,4 +7,4 @@ go build -o s3test main.go
 ./s3test
 
 # 빌드된 바이너리 파일 삭제
-rm main
+rm s3test
